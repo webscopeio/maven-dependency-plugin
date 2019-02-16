@@ -87,7 +87,7 @@ under the License.
 
   <properties>
     <mavenVersion>3.0</mavenVersion>
-    <doxiaVersion>1.4</doxiaVersion>
+    <doxiaVersion>1.8</doxiaVersion>
     <pluginTestingVersion>2.1</pluginTestingVersion>
     <javaVersion>7</javaVersion>
   </properties>
@@ -137,25 +137,7 @@ under the License.
     <dependency>
       <groupId>org.apache.maven.reporting</groupId>
       <artifactId>maven-reporting-impl</artifactId>
-      <version>2.3</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>maven-artifact-manager</artifactId>
-          <groupId>org.apache.maven</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>maven-project</artifactId>
-          <groupId>org.apache.maven</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>maven-profile</artifactId>
-          <groupId>org.apache.maven</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>maven-plugin-registry</artifactId>
-          <groupId>org.apache.maven</groupId>
-        </exclusion>
-      </exclusions>
+      <version>3.0.0</version>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
