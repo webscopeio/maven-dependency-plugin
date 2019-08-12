@@ -35,7 +35,6 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch-depth: 10
-    
     - name: Build
       run: mvn -V --no-transfer-progress -B clean verify -Prun-its
       shell: bash
