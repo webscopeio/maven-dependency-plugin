@@ -542,7 +542,7 @@ public class TestUnpackMojo
         mojo.setSilent( false );
         stubFactory.setCreateFiles( true );
         Artifact artifact = stubFactory.getSnapshotArtifact();
-        assertTrue( artifact.getFile().setLastModified( now - 20000 ) );
+        assertTrue( artifact.getFile().setLastModified( now - 10000 ) );
 
         ArtifactItem item = new ArtifactItem( createArtifact( artifact ) );
 
@@ -555,8 +555,7 @@ public class TestUnpackMojo
         // round down to the last second
         long time = now;
         time = time - ( time % 1000 );
-        // go back 10 more seconds for linux
-        time -= 10000;
+
         // set to known value
         assertTrue( unpackedFile.setLastModified( time ) );
         // set source to be newer was 4s but test is brittle on MacOS if less than 5s

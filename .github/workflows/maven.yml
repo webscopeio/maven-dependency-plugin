@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-name: Aapche Maven Dependency Plugin
+name: MDEP
 on:
   push:
     branches:
