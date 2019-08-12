@@ -3,6 +3,7 @@ on:
   push:
     branches:
     - master
+    - GITHUB*
   pull_request: 
     branches:
     - MDEP-*
