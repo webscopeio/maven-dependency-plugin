@@ -21,7 +21,7 @@ jobs:
     - name: Build
       run: |
         set -e
-				mvn -V --no-transfer-progress -B clean verify -Prun-its
+        mvn -V --no-transfer-progress -B clean verify -Prun-its
         
       shell: bash  
       env:
@@ -39,7 +39,7 @@ jobs:
     - name: Build
       run: |
         set -e
-				mvn -V --no-transfer-progress -B clean verify -Prun-its
+        mvn -V --no-transfer-progress -B clean verify -Prun-its
         
       shell: bash  
       env:
@@ -57,7 +57,7 @@ jobs:
     - name: Test
       run: |
         set -e
-				mvn -V --no-transfer-progress -B clean verify -Prun-its
+        mvn -V --no-transfer-progress -B clean verify -Prun-its
         
       shell: bash
       env:
@@ -78,7 +78,7 @@ jobs:
       run: |
         set -e
         export JAVA_HOME="C:\Program Files\OpenJDK\jdk-12.0.2"
-				mvn -V --no-transfer-progress -B clean verify -Prun-its
+        mvn -V --no-transfer-progress -B clean verify -Prun-its
       
       shell: bash
       env:
