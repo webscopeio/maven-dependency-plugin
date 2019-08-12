@@ -1,0 +1,85 @@
+name: Aapche Maven Dependency Plugin
+on:
+  push:
+    branches:
+    - master
+  pull_request: 
+    branches:
+		- MDEP-*
+    - *
+    
+jobs:
+  mdep_linux_11:
+    name: Linux (OpenJDK 11)
+    runs-on: ubuntu-latest
+    container: openjdk:11
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 10
+    
+    - name: Build
+      run: |
+        set -e
+				mvn -V --no-transfer-progress -B clean verify -Prun-its
+        
+      shell: bash  
+      env:
+       LC_ALL: en_US.UTF-8
+
+  mdep_linux_12:
+    name: Linux (OpenJDK 12)
+    runs-on: ubuntu-latest
+    container: openjdk:12
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 10
+    
+    - name: Build
+      run: |
+        set -e
+				mvn -V --no-transfer-progress -B clean verify -Prun-its
+        
+      shell: bash  
+      env:
+       LC_ALL: en_US.UTF-8
+
+  mdep_linux_13:
+    name: Linux (OpenJDK 13)
+    runs-on: ubuntu-latest
+    container: openjdk:13
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 10
+    
+    - name: Test
+      run: |
+        set -e
+				mvn -V --no-transfer-progress -B clean verify -Prun-its
+        
+      shell: bash
+      env:
+       LC_ALL: en_US.UTF-8
+  
+  mdep_windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 10
+   
+    - run: choco install openjdk --version 12.0.2
+      shell: bash
+    
+    - name: Test
+      run: |
+        set -e
+        export JAVA_HOME="C:\Program Files\OpenJDK\jdk-12.0.2"
+				mvn -V --no-transfer-progress -B clean verify -Prun-its
+      
+      shell: bash
+      env:
+       LC_ALL: en_US.UTF-8
