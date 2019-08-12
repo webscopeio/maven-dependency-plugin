@@ -27,8 +27,21 @@ on:
     - GITHUB*
     
 jobs:
+  mdep_linux_8:
+    name: Ubuntu (OpenJDK 8)
+    runs-on: ubuntu-latest
+    container: maven:3.6.1-jdk-8-slim
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 10
+    - name: Build
+      run: mvn -V --no-transfer-progress -B clean verify -Prun-its
+      shell: bash
+      env:
+       LC_ALL: en_US.UTF-8
   mdep_linux_11:
-    name: Linux (OpenJDK 11)
+    name: Ubuntu (OpenJDK 11)
     runs-on: ubuntu-latest
     container: maven:3.6.1-jdk-11-slim
     steps:
@@ -40,7 +53,32 @@ jobs:
       shell: bash
       env:
        LC_ALL: en_US.UTF-8
-
+  mdep_linux_12:
+    name: Ubuntu (OpenJDK 12)
+    runs-on: ubuntu-latest
+    container: maven:3.6.1-jdk-12-slim
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 10
+    - name: Build
+      run: mvn -V --no-transfer-progress -B clean verify -Prun-its
+      shell: bash
+      env:
+       LC_ALL: en_US.UTF-8
+  mdep_linux_13:
+    name: Ubuntu (OpenJDK 13)
+    runs-on: ubuntu-latest
+    container: maven:3.6.1-jdk-13-slim
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 10
+    - name: Build
+      run: mvn -V --no-transfer-progress -B clean verify -Prun-its
+      shell: bash
+      env:
+       LC_ALL: en_US.UTF-8
   mdep_windows:
     name: Windows
     runs-on: windows-latest
@@ -51,7 +89,6 @@ jobs:
    
     - run: choco install openjdk --version 12.0.2
       shell: bash
-    
     - name: Test
       run: |
         set -e
