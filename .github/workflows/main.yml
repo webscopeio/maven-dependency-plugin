@@ -37,10 +37,8 @@ jobs:
         fetch-depth: 10
     
     - name: Build
-      run: |
-        mvn -V --no-transfer-progress -B clean verify -Prun-its
-        
-      shell: bash  
+      run: mvn -V --no-transfer-progress -B clean verify -Prun-its
+      shell: bash
       env:
        LC_ALL: en_US.UTF-8
 
