@@ -6,7 +6,7 @@ on:
   pull_request: 
     branches:
     - MDEP-*
-    - *
+    - GITHUB*
     
 jobs:
   mdep_linux_11:
