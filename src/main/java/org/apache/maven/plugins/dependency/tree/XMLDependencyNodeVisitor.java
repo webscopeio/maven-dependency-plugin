@@ -19,6 +19,16 @@ package org.apache.maven.plugins.dependency.tree;
  * under the License.
  */
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.apache.maven.shared.dependency.graph.traversal.DependencyNodeVisitor;
@@ -33,10 +43,10 @@ import java.util.List;
  * @author <a href="mailto:sikora.bogdan@webscope.io">Bogdan Sikora</a>
  * @since 3.1.2
  */
-public class XMLDependencyNodeVisitor extends AbstractSerializingVisitor implements DependencyNodeVisitor
+public class XMLDependencyNodeVisitor
+    extends AbstractSerializingVisitor
+    implements DependencyNodeVisitor
 {
-    public static final String WHITESPACE_TOKEN = "   ";
-
     /**
      * Constructor.
      *
@@ -53,16 +63,34 @@ public class XMLDependencyNodeVisitor extends AbstractSerializingVisitor impleme
     @Override
     public boolean visit( DependencyNode node )
     {
-        if ( node.getParent() == null || node.getParent() == node )
+        try
         {
-            writeNode( node, true, false, 0 );
-
-            List<DependencyNode> children = node.getChildren();
-            for ( DependencyNode child : children )
+            if ( node.getParent() == null || node.getParent() == node )
             {
-                handleChild( child, 1 );
-            }
+                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                Document doc = dBuilder.newDocument();
+                Element rootElement = getNode( doc, node );
+                doc.appendChild( rootElement );
 
+                List<DependencyNode> children = node.getChildren();
+                for ( DependencyNode child : children )
+                {
+                    handleChild( doc, child, rootElement );
+                }
+
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                DOMSource source = new DOMSource( doc );
+
+                StreamResult console = new StreamResult( writer );
+
+                transformer.transform( source, console );
+            }
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
         }
 
         return true;
@@ -74,73 +102,39 @@ public class XMLDependencyNodeVisitor extends AbstractSerializingVisitor impleme
     @Override
     public boolean endVisit( DependencyNode node )
     {
-        if ( node.getParent() == null || node.getParent() == node )
-        {
-            writeNode( node, true, true, 0 );
-        }
         return true;
     }
 
     /**
      * Render child with its children recursively
      *
+     * @param doc Docuemnt to use
      * @param node child node to handle
      * @param depth depth of the child
      */
-    private void handleChild( DependencyNode node, int depth )
+    private void handleChild( Document doc, DependencyNode node, Element parent )
     {
+        Element element = getNode( doc, node );
+        parent.appendChild( element );
+
         List<DependencyNode> children = node.getChildren();
-        if ( children.size() == 0 )
-        {
-            writeNode( node, false, false, depth );
-            return;
-        }
-
-        writeNode( node, true, false, depth );
-
         for ( DependencyNode child : children )
         {
-            handleChild( child, depth + 1 );
+            handleChild( doc, child, element );
         }
-
-        writeNode( node, true, true, depth );
     }
 
     /**
-     * Get amount of whitespace
+     * Get element from node
      *
-     * @param amount amount of {@link XMLDependencyNodeVisitor.WHITESPACE_TOKEN}
+     * @param doc Docuemnt to use
+     * @param node Node to get data from
      */
-    private String getSpaces( int amount )
-    {
-        String ret = "";
-        for ( int i = 0; i < amount; i += 1 )
-        {
-            ret += WHITESPACE_TOKEN;
-        }
-        return ret;
-    }
-
-    /**
-     * Write node with writer
-     *
-     * @param node Node to write
-     * @param withChildren does the node have children
-     * @param closing closing tag?
-     * @param depth depth of this node
-     */
-    private void writeNode( DependencyNode node, boolean withChildren, boolean closing, int depth )
+    private Element getNode( Document doc, DependencyNode node )
     {
         Artifact artifact = node.getArtifact();
-
-        writer.write(
-            getSpaces( depth )
-            + ( closing ? "</" : "<" )
-            + artifact.getArtifactId()
-            + ( closing ? "" : " version=\"" + artifact.getVersion() + "\"" )
-            + ( withChildren && !closing ? ">" : "/>" )
-            + System.lineSeparator()
-        );
+        Element element = doc.createElement( artifact.getArtifactId() );
+        element.setAttribute( "version", artifact.getVersion() );
+        return element;
     }
-
 }
