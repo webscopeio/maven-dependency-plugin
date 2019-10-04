@@ -384,6 +384,10 @@ public class TreeMojo
         {
             return new DOTDependencyNodeVisitor( writer );
         }
+        else if ( "xml".equals( outputType ) )
+        {
+            return new XMLDependencyNodeVisitor( writer );
+        }
         else
         {
             return new SerializingDependencyNodeVisitor( writer, toGraphTokens( tokens ) );
