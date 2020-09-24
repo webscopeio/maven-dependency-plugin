@@ -19,6 +19,8 @@ package org.apache.maven.plugins.dependency.analyze;
  * under the License.
  */
 
+import static org.junit.Assert.assertNotEquals;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,12 +30,12 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.TestCase;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Exclusion;
-import org.apache.maven.plugins.dependency.analyze.AnalyzeDepMgt;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.dependency.testUtils.DependencyArtifactStubFactory;
 import org.apache.maven.plugins.dependency.testUtils.stubs.DependencyProjectStub;
 import org.apache.maven.project.MavenProject;
@@ -82,7 +84,7 @@ public class TestAnalyzeDepMgt
         exclusion.setVersion( "3.0" );
 
         exclusion.addExclusion( ex );
-        List<Dependency> list = new ArrayList<Dependency>();
+        List<Dependency> list = new ArrayList<>();
         list.add( exclusion );
 
         depMgt = new DependencyManagement();
@@ -117,25 +119,25 @@ public class TestAnalyzeDepMgt
         // sure it's ok before
         // testing the next one
         dep.setType( "t" );
-        assertFalse( dep.getManagementKey().equals( mojo.getArtifactManagementKey( artifact ) ) );
+        assertNotEquals( dep.getManagementKey(), mojo.getArtifactManagementKey( artifact ) );
 
         dep.setType( "type" );
         assertEquals( dep.getManagementKey(), mojo.getArtifactManagementKey( artifact ) );
 
         dep.setArtifactId( "a" );
-        assertFalse( dep.getManagementKey().equals( mojo.getArtifactManagementKey( artifact ) ) );
+        assertNotEquals( dep.getManagementKey(), mojo.getArtifactManagementKey( artifact ) );
 
         dep.setArtifactId( "artifact" );
         assertEquals( dep.getManagementKey(), mojo.getArtifactManagementKey( artifact ) );
 
         dep.setClassifier( "c" );
-        assertFalse( dep.getManagementKey().equals( mojo.getArtifactManagementKey( artifact ) ) );
+        assertNotEquals( dep.getManagementKey(), mojo.getArtifactManagementKey( artifact ) );
 
         dep.setClassifier( "class" );
         assertEquals( dep.getManagementKey(), mojo.getArtifactManagementKey( artifact ) );
 
         dep.setGroupId( "g" );
-        assertFalse( dep.getManagementKey().equals( mojo.getArtifactManagementKey( artifact ) ) );
+        assertNotEquals( dep.getManagementKey(), mojo.getArtifactManagementKey( artifact ) );
 
         dep.setGroupId( "group" );
         dep.setClassifier( null );
@@ -152,7 +154,7 @@ public class TestAnalyzeDepMgt
 
         assertEquals( 0, mojo.addExclusions( null ).size() );
 
-        List<Exclusion> list = new ArrayList<Exclusion>();
+        List<Exclusion> list = new ArrayList<>();
         list.add( ex );
         Map<String, Exclusion> map = mojo.addExclusions( list );
 
@@ -163,7 +165,7 @@ public class TestAnalyzeDepMgt
 
     public void testGetExclusionErrors()
     {
-        List<Exclusion> list = new ArrayList<Exclusion>();
+        List<Exclusion> list = new ArrayList<>();
         list.add( ex );
 
         // already tested this method so I can trust it.
@@ -179,7 +181,7 @@ public class TestAnalyzeDepMgt
     public void testGetMismatch()
         throws IOException
     {
-        Map<String, Dependency> depMgtMap = new HashMap<String, Dependency>();
+        Map<String, Dependency> depMgtMap = new HashMap<>();
 
         depMgtMap.put( exclusion.getManagementKey(), exclusion );
 
@@ -192,60 +194,30 @@ public class TestAnalyzeDepMgt
     }
 
     public void testMojo()
-        throws IOException
+        throws IOException, MojoExecutionException, MojoFailureException
     {
         mojo.setIgnoreDirect( false );
-        try
-        {
-            // test with nothing in depMgt
-            mojo.execute();
-        }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
-            fail( "Caught Unexpected Exception:" + e.getLocalizedMessage() );
-        }
+        // test with nothing in depMgt
+        mojo.execute();
+
+        DependencyProjectStub project = (DependencyProjectStub) mojo.getProject();
+        project.setDependencyManagement( depMgt );
+        // test with exclusion
+        mojo.execute();
 
         try
         {
-            DependencyProjectStub project = (DependencyProjectStub) mojo.getProject();
-            project.setDependencyManagement( depMgt );
-            // test with exclusion
-            mojo.execute();
-        }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
-            fail( "Caught Unexpected Exception:" + e.getLocalizedMessage() );
-        }
-
-        try
-        {
-            DependencyProjectStub project = (DependencyProjectStub) mojo.getProject();
-            project.setDependencyManagement( depMgt );
             // test with exclusion
             mojo.setFailBuild( true );
             mojo.execute();
             fail( "Expected exception to fail the build." );
         }
-        catch ( Exception e )
+        catch ( MojoExecutionException e )
         {
-            System.out.println( "Caught Expected Exception:" + e.getLocalizedMessage() );
         }
 
-        try
-        {
-            DependencyProjectStub project = (DependencyProjectStub) mojo.getProject();
-            project.setDependencyManagement( depMgt );
-            // test with exclusion
-            mojo.setFailBuild( true );
-            mojo.setIgnoreDirect( true );
-            mojo.execute();
-        }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
-            fail( "Caught Unexpected Exception:" + e.getLocalizedMessage() );
-        }
+        mojo.setFailBuild( true );
+        mojo.setIgnoreDirect( true );
+        mojo.execute();
     }
 }

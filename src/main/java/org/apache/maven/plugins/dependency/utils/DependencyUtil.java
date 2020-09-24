@@ -24,11 +24,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Objects;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.plugin.logging.Log;
-import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.StringUtils;
 
 /**
@@ -205,7 +205,7 @@ public final class DependencyUtil
         // if the classifier and type are the same (sources), then don't
         // repeat.
         // avoids names like foo-sources-sources
-        if ( !StringUtils.equals( artifact.getClassifier(), artifact.getType() ) )
+        if ( !Objects.equals( artifact.getClassifier(), artifact.getType() ) )
         {
             sb.append( "-" );
             sb.append( artifact.getType() );
@@ -226,22 +226,11 @@ public final class DependencyUtil
     public static synchronized void write( String string, File file, boolean append, Log log )
         throws IOException
     {
-        file.getParentFile().mkdirs();
+        file.getParentFile().mkdirs(); 
 
-        FileWriter writer = null;
-
-        try
+        try ( FileWriter writer = new FileWriter( file, append ) )
         {
-            writer = new FileWriter( file, append );
-
             writer.write( string );
-
-            writer.close();
-            writer = null;
-        }
-        finally
-        {
-            IOUtil.close( writer );
         }
     }
 
@@ -249,7 +238,7 @@ public final class DependencyUtil
      * Writes the specified string to the log at info level.
      * 
      * @param string the string to write
-     * @param log where to log information.
+     * @param log where to log information
      * @throws IOException if an I/O error occurs
      */
     public static synchronized void log( String string, Log log )
@@ -278,9 +267,10 @@ public final class DependencyUtil
     }
 
     /**
-     * clean up configuration string before it can be tokenized
-     * @param str The str which should be cleaned.
-     * @return cleaned up string.
+     * Clean up configuration string before it can be tokenized.
+     * 
+     * @param str the string which should be cleaned
+     * @return cleaned up string
      */
     public static String cleanToBeTokenizedString( String str )
     {

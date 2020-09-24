@@ -19,6 +19,7 @@ package org.apache.maven.plugins.dependency.analyze;
  * under the License.
  */
 
+import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -37,8 +38,8 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 /**
  * Analyzes the <code>&lt;dependencies/&gt;</code> and <code>&lt;dependencyManagement/&gt;</code> tags in the
@@ -85,21 +86,13 @@ public class AnalyzeDuplicateMojo
 
         MavenXpp3Reader pomReader = new MavenXpp3Reader();
         Model model = null;
-        Reader reader = null;
-        try
+        try ( Reader reader = ReaderFactory.newXmlReader( project.getFile() ) )
         {
-            reader = ReaderFactory.newXmlReader( project.getFile() );
             model = pomReader.read( reader );
-            reader.close();
-            reader = null;
         }
-        catch ( Exception e )
+        catch ( IOException | XmlPullParserException e )
         {
-            throw new MojoExecutionException( "IOException: " + e.getMessage(), e );
-        }
-        finally
-        {
-            IOUtil.close( reader );
+            throw new MojoExecutionException( "Exception: " + e.getMessage(), e );
         }
 
         Set<String> duplicateDependencies = Collections.emptySet();
@@ -158,7 +151,7 @@ public class AnalyzeDuplicateMojo
 
     private Set<String> findDuplicateDependencies( List<Dependency> modelDependencies )
     {
-        List<String> modelDependencies2 = new ArrayList<String>();
+        List<String> modelDependencies2 = new ArrayList<>();
         for ( Dependency dep : modelDependencies )
         {
             modelDependencies2.add( dep.getManagementKey() );
@@ -166,7 +159,7 @@ public class AnalyzeDuplicateMojo
 
         // @formatter:off
         return new LinkedHashSet<String>( 
-                CollectionUtils.disjunction( modelDependencies2, new LinkedHashSet<String>( modelDependencies2 ) ) );
+                CollectionUtils.disjunction( modelDependencies2, new LinkedHashSet<>( modelDependencies2 ) ) );
         // @formatter:on
     }
 }

@@ -31,17 +31,14 @@ import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.handler.manager.DefaultArtifactHandlerManager;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.testing.SilentLog;
 import org.apache.maven.plugin.testing.stubs.MavenProjectStub;
 import org.apache.maven.plugin.testing.stubs.StubArtifactRepository;
 import org.apache.maven.plugins.dependency.AbstractDependencyMojoTestCase;
 import org.apache.maven.plugins.dependency.testUtils.DependencyArtifactStubFactory;
-import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.transfer.artifact.ArtifactCoordinate;
-import org.apache.maven.shared.transfer.repository.RepositoryManager;
-import org.sonatype.aether.impl.internal.SimpleLocalRepositoryManager;
-import org.sonatype.aether.util.DefaultRepositorySystemSession;
 
 /**
  * @author brianf
@@ -49,7 +46,7 @@ import org.sonatype.aether.util.DefaultRepositorySystemSession;
 public class TestClassifierTypeTranslator
     extends AbstractDependencyMojoTestCase
 {
-    Set<Artifact> artifacts = new HashSet<Artifact>();
+    Set<Artifact> artifacts = new HashSet<>();
 
     ArtifactFactory artifactFactory;
 
@@ -57,19 +54,16 @@ public class TestClassifierTypeTranslator
 
     Log log = new SilentLog();
 
-    private RepositoryManager repoManager;
-
-    private ProjectBuildingRequest buildingRequest;
-
     private ArtifactHandlerManager artifactHandlerManager;
 
+    @Override
     protected void setUp()
         throws Exception
     {
         super.setUp( "classifiertype-translator", false );
 
         artifactHandlerManager = new DefaultArtifactHandlerManager();
-        this.setVariableValueToObject( artifactHandlerManager, "artifactHandlers", new HashMap() );
+        this.setVariableValueToObject( artifactHandlerManager, "artifactHandlers", new HashMap<>() );
 
         artifactFactory = new DefaultArtifactFactory();
         this.setVariableValueToObject( artifactFactory, "artifactHandlerManager", artifactHandlerManager );
@@ -79,13 +73,11 @@ public class TestClassifierTypeTranslator
         DependencyArtifactStubFactory factory = new DependencyArtifactStubFactory( null, false );
         artifacts = factory.getMixedArtifacts();
 
-        repoManager = lookup( RepositoryManager.class );
-
+        LegacySupport legacySupport = lookup( LegacySupport.class );
         MavenSession session = newMavenSession( new MavenProjectStub() );
-        buildingRequest = session.getProjectBuildingRequest();
+        legacySupport.setSession( session );
 
-        DefaultRepositorySystemSession repoSession = (DefaultRepositorySystemSession) session.getRepositorySession();
-        repoSession.setLocalRepositoryManager( new SimpleLocalRepositoryManager( stubFactory.getWorkingDir() ) );
+        installLocalRepository( legacySupport );
 
     }
 
@@ -184,8 +176,7 @@ public class TestClassifierTypeTranslator
             {
                 ArtifactCoordinate translatedArtifact = resultIter.next();
                 if ( artifact.getArtifactId() == translatedArtifact.getArtifactId()
-                    && artifact.getGroupId() == translatedArtifact.getGroupId()
-                /* && artifact.getScope() == translatedArtifact.getScope() */ )
+                    && artifact.getGroupId() == translatedArtifact.getGroupId() )
                 {
                     assertEquals( translatedArtifact.getClassifier(), classifier );
                     assertEquals( translatedArtifact.getExtension(), type );
