@@ -137,6 +137,7 @@ public class XMLDependencyNodeVisitor
         Artifact artifact = node.getArtifact();
         Element element = doc.createElement( artifact.getArtifactId() );
         element.setAttribute( "version", artifact.getVersion() );
+        element.setAttribute("scope", artifact.getScope());
         return element;
     }
 }
