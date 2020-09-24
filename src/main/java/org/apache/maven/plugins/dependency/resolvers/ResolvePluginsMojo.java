@@ -21,17 +21,13 @@ package org.apache.maven.plugins.dependency.resolvers;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.dependency.utils.DependencyUtil;
-import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactFilterException;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactsFilter;
@@ -50,12 +46,6 @@ import org.apache.maven.shared.transfer.dependencies.resolve.DependencyResolverE
 public class ResolvePluginsMojo
     extends AbstractResolveMojo
 {
-
-    /**
-     * Remote repositories which will be searched for plugins.
-     */
-    @Parameter( defaultValue = "${project.pluginArtifactRepositories}", readonly = true, required = true )
-    private List<ArtifactRepository> remotePluginRepositories;
 
     /**
      * Main entry into mojo. Gets the list of dependencies and iterates through displaying the resolved version.
@@ -100,8 +90,10 @@ public class ResolvePluginsMojo
                     }
 
                     String id = plugin.toString();
-                    sb.append( "   " + id + ( outputAbsoluteArtifactFilename ? ":" + artifactFilename : "" ) );
-                    sb.append( System.lineSeparator() );
+                    sb.append( "   " )
+                            .append( id )
+                            .append( outputAbsoluteArtifactFilename ? ":" + artifactFilename : "" )
+                            .append( System.lineSeparator() );
 
                     if ( !excludeTransitive )
                     {
@@ -128,8 +120,10 @@ public class ResolvePluginsMojo
                             }
 
                             id = artifact.toString();
-                            sb.append( "      " + id + ( outputAbsoluteArtifactFilename ? ":" + artifactFilename : "" )
-                                + System.lineSeparator() );
+                            sb.append( "      " )
+                                    .append( id )
+                                    .append( outputAbsoluteArtifactFilename ? ":" + artifactFilename : "" )
+                                    .append( System.lineSeparator() );
                         }
                     }
                 }
@@ -146,19 +140,7 @@ public class ResolvePluginsMojo
                 }
             }
         }
-        catch ( final IOException e )
-        {
-            throw new MojoExecutionException( e.getMessage(), e );
-        }
-        catch ( final ArtifactFilterException e )
-        {
-            throw new MojoExecutionException( e.getMessage(), e );
-        }
-        catch ( ArtifactResolverException e )
-        {
-            throw new MojoExecutionException( e.getMessage(), e );
-        }
-        catch ( DependencyResolverException e )
+        catch ( IOException | ArtifactFilterException | ArtifactResolverException | DependencyResolverException e )
         {
             throw new MojoExecutionException( e.getMessage(), e );
         }
@@ -177,16 +159,16 @@ public class ResolvePluginsMojo
         final Set<Artifact> plugins = getProject().getPluginArtifacts();
         final Set<Artifact> reports = getProject().getReportArtifacts();
 
-        Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
+        Set<Artifact> artifacts = new LinkedHashSet<>();
         artifacts.addAll( reports );
         artifacts.addAll( plugins );
 
         final FilterArtifacts filter = getArtifactsFilter();
         artifacts = filter.filter( artifacts );
 
-        Set<Artifact> resolvedArtifacts = new LinkedHashSet<Artifact>( artifacts.size() );
+        Set<Artifact> resolvedArtifacts = new LinkedHashSet<>( artifacts.size() );
         // final ArtifactFilter filter = getPluginFilter();
-        for ( final Artifact artifact : new LinkedHashSet<Artifact>( artifacts ) )
+        for ( final Artifact artifact : new LinkedHashSet<>( artifacts ) )
         {
             // if ( !filter.include( artifact ) )
             // {
@@ -202,10 +184,7 @@ public class ResolvePluginsMojo
             // continue;
             // }
 
-            ProjectBuildingRequest buildingRequest =
-                new DefaultProjectBuildingRequest( session.getProjectBuildingRequest() );
-
-            buildingRequest.setRemoteRepositories( this.remotePluginRepositories );
+            ProjectBuildingRequest buildingRequest = newResolvePluginProjectBuildingRequest();
 
             // resolve the new artifact
             resolvedArtifacts.add( getArtifactResolver().resolveArtifact( buildingRequest, artifact ).getArtifact() );

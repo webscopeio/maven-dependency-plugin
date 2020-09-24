@@ -28,7 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.plugin.AbstractMojo;
@@ -49,7 +49,7 @@ import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 
 /**
  * Analyzes the dependencies of this project and determines which are: used and declared; used and undeclared; unused
- * and declared.
+ * and declared; compile scoped but only used in tests.
  *
  * @author <a href="mailto:markhobson@gmail.com">Mark Hobson</a>
  * @since 2.0-alpha-5
@@ -315,12 +315,14 @@ public abstract class AbstractAnalyzeMojo
             analysis = analysis.ignoreNonCompile();
         }
 
-        Set<Artifact> usedDeclared = new LinkedHashSet<Artifact>( analysis.getUsedDeclaredArtifacts() );
-        Set<Artifact> usedUndeclared = new LinkedHashSet<Artifact>( analysis.getUsedUndeclaredArtifacts() );
-        Set<Artifact> unusedDeclared = new LinkedHashSet<Artifact>( analysis.getUnusedDeclaredArtifacts() );
+        Set<Artifact> usedDeclared = new LinkedHashSet<>( analysis.getUsedDeclaredArtifacts() );
+        Set<Artifact> usedUndeclared = new LinkedHashSet<>( analysis.getUsedUndeclaredArtifacts() );
+        Set<Artifact> unusedDeclared = new LinkedHashSet<>( analysis.getUnusedDeclaredArtifacts() );
+        Set<Artifact> testArtifactsWithNonTestScope = new LinkedHashSet<>(
+                analysis.getTestArtifactsWithNonTestScope() );
 
-        Set<Artifact> ignoredUsedUndeclared = new LinkedHashSet<Artifact>();
-        Set<Artifact> ignoredUnusedDeclared = new LinkedHashSet<Artifact>();
+        Set<Artifact> ignoredUsedUndeclared = new LinkedHashSet<>();
+        Set<Artifact> ignoredUnusedDeclared = new LinkedHashSet<>();
 
         ignoredUsedUndeclared.addAll( filterDependencies( usedUndeclared, ignoredDependencies ) );
         ignoredUsedUndeclared.addAll( filterDependencies( usedUndeclared, ignoredUsedUndeclaredDependencies ) );
@@ -353,6 +355,15 @@ public abstract class AbstractAnalyzeMojo
             getLog().warn( "Unused declared dependencies found:" );
 
             logArtifacts( unusedDeclared, true );
+            reported = true;
+            warning = true;
+        }
+
+        if ( !testArtifactsWithNonTestScope.isEmpty() )
+        {
+            getLog().warn( "Non-test scoped test only dependencies found:" );
+
+            logArtifacts( testArtifactsWithNonTestScope, true );
             reported = true;
             warning = true;
         }
@@ -497,7 +508,7 @@ public abstract class AbstractAnalyzeMojo
         throws MojoExecutionException
     {
         ArtifactFilter filter = new StrictPatternExcludesArtifactFilter( Arrays.asList( excludes ) );
-        List<Artifact> result = new ArrayList<Artifact>();
+        List<Artifact> result = new ArrayList<>();
 
         for ( Iterator<Artifact> it = artifacts.iterator(); it.hasNext(); )
         {

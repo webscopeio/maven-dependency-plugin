@@ -20,7 +20,6 @@ package org.apache.maven.plugins.dependency;
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -41,6 +40,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.repository.RepositorySystem;
+import org.apache.maven.settings.Settings;
 import org.apache.maven.shared.transfer.artifact.ArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
@@ -64,15 +65,9 @@ public class GetMojo
     @Parameter( defaultValue = "${session}", required = true, readonly = true )
     private MavenSession session;
 
-    /**
-     *
-     */
     @Component
     private ArtifactResolver artifactResolver;
 
-    /**
-    *
-    */
     @Component
     private DependencyResolver dependencyResolver;
 
@@ -84,6 +79,12 @@ public class GetMojo
      */
     @Component( role = ArtifactRepositoryLayout.class )
     private Map<String, ArtifactRepositoryLayout> repositoryLayouts;
+
+    /**
+     * The repository system.
+     */
+    @Component
+    private RepositorySystem repositorySystem;
 
     private DefaultDependableCoordinate coordinate = new DefaultDependableCoordinate();
 
@@ -121,7 +122,7 @@ public class GetMojo
 
     /**
      * Repositories in the format id::[layout]::url or just url, separated by comma. ie.
-     * central::default::http://repo1.maven.apache.org/maven2,myrepo::::http://repo.acme.com,http://repo.acme2.com
+     * central::default::https://repo.maven.apache.org/maven2,myrepo::::https://repo.acme.com,https://repo.acme2.com
      */
     @Parameter( property = "remoteRepositories" )
     private String remoteRepositories;
@@ -192,7 +193,7 @@ public class GetMojo
             new ArtifactRepositoryPolicy( true, ArtifactRepositoryPolicy.UPDATE_POLICY_ALWAYS,
                                           ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN );
 
-        List<ArtifactRepository> repoList = new ArrayList<ArtifactRepository>();
+        List<ArtifactRepository> repoList = new ArrayList<>();
 
         if ( pomRemoteRepositories != null )
         {
@@ -202,7 +203,7 @@ public class GetMojo
         if ( remoteRepositories != null )
         {
             // Use the same format as in the deploy plugin id::layout::url
-            List<String> repos = Arrays.asList( StringUtils.split( remoteRepositories, "," ) );
+            String[] repos = StringUtils.split( remoteRepositories, "," );
             for ( String repo : repos )
             {
                 repoList.add( parseRepository( repo, always ) );
@@ -213,6 +214,11 @@ public class GetMojo
         {
             ProjectBuildingRequest buildingRequest =
                 new DefaultProjectBuildingRequest( session.getProjectBuildingRequest() );
+
+            Settings settings = session.getSettings();
+            repositorySystem.injectMirror( repoList, settings.getMirrors() );
+            repositorySystem.injectProxy( repoList, settings.getProxies() );
+            repositorySystem.injectAuthentication( repoList, settings.getServers() );
 
             buildingRequest.setRemoteRepositories( repoList );
 
@@ -227,11 +233,7 @@ public class GetMojo
                 artifactResolver.resolveArtifact( buildingRequest, toArtifactCoordinate( coordinate ) );
             }
         }
-        catch ( ArtifactResolverException e )
-        {
-            throw new MojoExecutionException( "Couldn't download artifact: " + e.getMessage(), e );
-        }
-        catch ( DependencyResolverException e )
+        catch ( ArtifactResolverException | DependencyResolverException e )
         {
             throw new MojoExecutionException( "Couldn't download artifact: " + e.getMessage(), e );
         }

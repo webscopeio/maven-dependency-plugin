@@ -26,12 +26,11 @@ import java.util.List;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.dependency.AbstractDependencyMojoTestCase;
 import org.apache.maven.plugins.dependency.utils.markers.UnpackFileMarkerHandler;
 import org.codehaus.plexus.archiver.manager.ArchiverManager;
-import org.sonatype.aether.impl.internal.SimpleLocalRepositoryManager;
-import org.sonatype.aether.util.DefaultRepositorySystemSession;
 
 public class TestIncludeExcludeUnpackMojo
     extends AbstractDependencyMojoTestCase
@@ -44,7 +43,7 @@ public class TestIncludeExcludeUnpackMojo
 
     private final String PACKED_FILE_PATH = "target/test-classes/unit/unpack-dependencies-test/" + PACKED_FILE;
 
-    UnpackMojo mojo;
+    private UnpackMojo mojo;
 
     protected void setUp()
         throws Exception
@@ -64,7 +63,7 @@ public class TestIncludeExcludeUnpackMojo
         stubFactory.setSrcFile( new File( getBasedir() + File.separatorChar + PACKED_FILE_PATH ) );
         Artifact artifact = stubFactory.createArtifact( "test", "test", "1.0", Artifact.SCOPE_COMPILE, "jar", null );
         ArtifactItem item = stubFactory.getArtifactItem( artifact );
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        List<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( item );
         assertNotNull( mojo );
         assertNotNull( mojo.getProject() );
@@ -77,9 +76,9 @@ public class TestIncludeExcludeUnpackMojo
         MavenSession session = newMavenSession( mojo.getProject() );
         setVariableValueToObject( mojo, "session", session );
 
-        DefaultRepositorySystemSession repoSession = (DefaultRepositorySystemSession) session.getRepositorySession();
-
-        repoSession.setLocalRepositoryManager( new SimpleLocalRepositoryManager( stubFactory.getWorkingDir() ) );
+        LegacySupport legacySupport = lookup( LegacySupport.class );
+        legacySupport.setSession( session );
+        installLocalRepository( legacySupport );
     }
 
     protected void tearDown()
@@ -229,7 +228,7 @@ public class TestIncludeExcludeUnpackMojo
         Artifact artifact = stubFactory.createArtifact( "test", "test", "1.0", Artifact.SCOPE_COMPILE, "jar", null );
         ArtifactItem item = stubFactory.getArtifactItem( artifact );
         item.setIncludes( "**/*" );
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        List<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( item );
         mojo.setArtifactItems( list );
         mojo.setIncludes( "**/test2" + UNPACKED_FILE_SUFFIX );
@@ -246,7 +245,7 @@ public class TestIncludeExcludeUnpackMojo
         Artifact artifact = stubFactory.createArtifact( "test", "test", "1.0", Artifact.SCOPE_COMPILE, "jar", null );
         ArtifactItem item = stubFactory.getArtifactItem( artifact );
         item.setExcludes( "**/*" );
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        List<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( item );
         mojo.setArtifactItems( list );
         mojo.setExcludes( "**/test2" + UNPACKED_FILE_SUFFIX );
@@ -260,7 +259,7 @@ public class TestIncludeExcludeUnpackMojo
     public void testIncludeArtifactItemMultipleMarker()
         throws Exception
     {
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         Artifact artifact = stubFactory.createArtifact( "test", "test", "1.0", Artifact.SCOPE_COMPILE, "jar", null );
         ArtifactItem item = stubFactory.getArtifactItem( artifact );
         item.setOverWrite( "false" );
@@ -282,7 +281,7 @@ public class TestIncludeExcludeUnpackMojo
     public void testIncludeArtifactItemMultipleExecutions()
         throws Exception
     {
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         Artifact artifact = stubFactory.createArtifact( "test", "test", "1.0", Artifact.SCOPE_COMPILE, "jar", null );
         ArtifactItem item = stubFactory.getArtifactItem( artifact );
         item.setOverWrite( "false" );

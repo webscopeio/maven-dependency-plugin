@@ -19,18 +19,16 @@ package org.apache.maven.plugins.dependency.fromConfiguration;
  * under the License.    
  */
 
-import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.dependency.AbstractDependencyMojoTestCase;
 import org.apache.maven.plugins.dependency.testUtils.DependencyArtifactStubFactory;
 import org.apache.maven.plugins.dependency.utils.markers.UnpackFileMarkerHandler;
 import org.apache.maven.project.MavenProject;
-import org.sonatype.aether.impl.internal.SimpleLocalRepositoryManager;
-import org.sonatype.aether.util.DefaultRepositorySystemSession;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,11 +43,6 @@ public class TestUnpackMojo
 {
 
     UnpackMojo mojo;
-
-    public TestUnpackMojo()
-    {
-        super();
-    }
 
     protected void setUp()
         throws Exception
@@ -78,9 +71,10 @@ public class TestUnpackMojo
         MavenSession session = newMavenSession( mojo.getProject() );
         setVariableValueToObject( mojo, "session", session );
 
-        DefaultRepositorySystemSession repoSession = (DefaultRepositorySystemSession) session.getRepositorySession();
+        LegacySupport legacySupport = lookup( LegacySupport.class );
 
-        repoSession.setLocalRepositoryManager( new SimpleLocalRepositoryManager( stubFactory.getWorkingDir() ) );
+        legacySupport.setSession( session );
+        installLocalRepository( legacySupport );
     }
 
     public ArtifactItem getSingleArtifactItem( boolean removeVersion )
@@ -100,7 +94,7 @@ public class TestUnpackMojo
         item.setGroupId( "groupId" );
         item.setVersion( "1.0" );
 
-        ArrayList<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        ArrayList<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( createArtifact( item ) );
 
         mojo.setArtifactItems( list );
@@ -220,7 +214,7 @@ public class TestUnpackMojo
         item.setGroupId( "groupId" );
         item.setType( "type" );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -251,7 +245,7 @@ public class TestUnpackMojo
         dep2.setType( item.getType() );
         dep2.setVersion( "2.1" );
 
-        List<Dependency> list = new ArrayList<Dependency>( 2 );
+        List<Dependency> list = new ArrayList<>( 2 );
         list.add( dep2 );
         list.add( dep );
 
@@ -268,7 +262,7 @@ public class TestUnpackMojo
         item.setGroupId( "groupId" );
         item.setType( "jar" );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -290,7 +284,7 @@ public class TestUnpackMojo
         item.setGroupId( "groupId" );
         item.setType( "war" );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -318,7 +312,7 @@ public class TestUnpackMojo
         dep2.setType( item.getType() );
         dep2.setVersion( "3.1" );
 
-        List<Dependency> list = new ArrayList<Dependency>( 2 );
+        List<Dependency> list = new ArrayList<>( 2 );
         list.add( dep2 );
         list.add( dep );
 
@@ -345,7 +339,7 @@ public class TestUnpackMojo
         item.setGroupId( "groupId" );
         item.setType( "jar" );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         list.add( item );
 
         mojo.setArtifactItems( list );
@@ -382,7 +376,7 @@ public class TestUnpackMojo
         stubFactory.createArtifact( "groupId", "artifactId-2", VersionRange.createFromVersion( "3.1" ), null, "jar",
                                     "classifier", false );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         list.add( item );
 
         mojo.setArtifactItems( list );
@@ -418,7 +412,7 @@ public class TestUnpackMojo
         item.setType( "type" );
         item.setVersion( "1.0" );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>();
+        List<ArtifactItem> list = new ArrayList<>();
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -456,7 +450,7 @@ public class TestUnpackMojo
 
         ArtifactItem item = new ArtifactItem( createArtifact( release ) );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        List<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -476,7 +470,7 @@ public class TestUnpackMojo
 
         ArtifactItem item = new ArtifactItem( createArtifact( artifact ) );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        List<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -496,7 +490,7 @@ public class TestUnpackMojo
 
         ArtifactItem item = new ArtifactItem( createArtifact( release ) );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        List<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -516,7 +510,7 @@ public class TestUnpackMojo
 
         ArtifactItem item = new ArtifactItem( createArtifact( artifact ) );
 
-        List<ArtifactItem> list = new ArrayList<ArtifactItem>( 1 );
+        List<ArtifactItem> list = new ArrayList<>( 1 );
         list.add( item );
         mojo.setArtifactItems( list );
 
@@ -566,33 +560,13 @@ public class TestUnpackMojo
         File marker = new File( mojo.getMarkersDirectory(), artifact.getId().replace( ':', '-' ) + ".marker" );
         assertTrue( marker.setLastModified( time ) );
 
-        displayFile( "unpackedFile", unpackedFile );
-        displayFile( "artifact    ", artifact.getFile() );
-        displayFile( "marker      ", marker );
-        System.out.println( "mojo.execute()" );
         mojo.execute();
-        displayFile( "unpackedFile", unpackedFile );
-        displayFile( "artifact    ", artifact.getFile() );
-        displayFile( "marker      ", marker );
 
         long markerLastModifiedMillis = Files.getLastModifiedTime( marker.toPath() ).toMillis();
         long unpackedFileLastModifiedMillis = Files.getLastModifiedTime( unpackedFile.toPath() ).toMillis();
 
-        System.out.println( "marker.lastModified() = " + marker.lastModified() );
-        System.out.println( "unpackedFile.lastModified() = " + unpackedFile.lastModified() );
-        System.out.println( "markerLastModifiedMillis = " + markerLastModifiedMillis );
-        System.out.println( "unpackedFileLastModifiedMillis = " + unpackedFileLastModifiedMillis );
-
         assertTrue( "unpackedFile '" + unpackedFile + "' lastModified() == " + markerLastModifiedMillis
                 + ": should be different", markerLastModifiedMillis != unpackedFileLastModifiedMillis );
-    }
-
-    private void displayFile( String description, File file ) throws IOException
-    {
-        long toMillis = Files.getLastModifiedTime( file.toPath() ).toMillis();
-        System.out.println( description + ' ' + DateFormatUtils.ISO_DATETIME_FORMAT.format(
-                file.lastModified() ) + ' ' + toMillis + ' ' + file.getPath().substring(
-                getBasedir().length() ) );
     }
 
     public void assertUnpacked( ArtifactItem item, boolean overWrite )

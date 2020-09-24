@@ -26,13 +26,13 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.dependency.testUtils.DependencyTestUtils;
 import org.apache.maven.plugins.dependency.testUtils.stubs.StubDefaultFileMarkerHandler;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.testing.SilentLog;
@@ -43,7 +43,7 @@ import org.apache.maven.plugin.testing.SilentLog;
 public class TestDefaultMarkerFileHandler
     extends TestCase
 {
-    List<Artifact> artifacts = new ArrayList<Artifact>();
+    List<Artifact> artifacts = new ArrayList<>();
 
     Log log = new SilentLog();
 
@@ -66,14 +66,14 @@ public class TestDefaultMarkerFileHandler
         artifacts.add( artifact );
 
         outputFolder = new File( "target/markers/" );
-        DependencyTestUtils.removeDirectory( this.outputFolder );
+        FileUtils.deleteDirectory( this.outputFolder );
         assertFalse( outputFolder.exists() );
     }
 
     protected void tearDown()
         throws IOException
     {
-        DependencyTestUtils.removeDirectory( this.outputFolder );
+        FileUtils.deleteDirectory( this.outputFolder );
     }
 
     public void testSetMarker()
@@ -163,11 +163,11 @@ public class TestDefaultMarkerFileHandler
     public void testGetterSetter()
     {
         DefaultFileMarkerHandler handler = new DefaultFileMarkerHandler( null, null );
-        assertTrue( handler.getArtifact() == null );
+        assertNull( handler.getArtifact() );
         handler.setArtifact( artifacts.get( 0 ) );
         assertSame( artifacts.get( 0 ), handler.getArtifact() );
 
-        assertTrue( handler.getMarkerFilesDirectory() == null );
+        assertNull( handler.getMarkerFilesDirectory() );
         handler.setMarkerFilesDirectory( outputFolder );
         assertSame( outputFolder, handler.getMarkerFilesDirectory() );
     }

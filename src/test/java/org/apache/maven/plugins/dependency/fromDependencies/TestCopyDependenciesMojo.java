@@ -28,6 +28,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.resolver.filter.ScopeArtifactFilter;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.dependency.AbstractDependencyMojoTestCase;
@@ -35,8 +36,6 @@ import org.apache.maven.plugins.dependency.utils.DependencyUtil;
 import org.apache.maven.plugins.dependency.utils.markers.DefaultFileMarkerHandler;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.StringUtils;
-import org.sonatype.aether.impl.internal.SimpleLocalRepositoryManager;
-import org.sonatype.aether.util.DefaultRepositorySystemSession;
 
 public class TestCopyDependenciesMojo
     extends AbstractDependencyMojoTestCase
@@ -44,6 +43,7 @@ public class TestCopyDependenciesMojo
 
     CopyDependenciesMojo mojo;
 
+    @Override
     protected void setUp()
         throws Exception
     {
@@ -62,9 +62,9 @@ public class TestCopyDependenciesMojo
         MavenSession session = newMavenSession( project );
         setVariableValueToObject( mojo, "session", session );
 
-        DefaultRepositorySystemSession repoSession = (DefaultRepositorySystemSession) session.getRepositorySession();
-
-        repoSession.setLocalRepositoryManager( new SimpleLocalRepositoryManager( stubFactory.getWorkingDir() ) );
+        LegacySupport legacySupport = lookup( LegacySupport.class );
+        legacySupport.setSession( session );
+        installLocalRepository( legacySupport );
 
         Set<Artifact> artifacts = this.stubFactory.getScopedArtifacts();
         Set<Artifact> directArtifacts = this.stubFactory.getReleaseAndSnapshotArtifacts();
@@ -78,18 +78,10 @@ public class TestCopyDependenciesMojo
         setVariableValueToObject( mojo, "artifactHandlerManager", manager );
     }
 
-    public void assertNoMarkerFile( Artifact artifact )
+    public void assertNoMarkerFile( Artifact artifact ) throws MojoExecutionException
     {
         DefaultFileMarkerHandler handle = new DefaultFileMarkerHandler( artifact, mojo.markersDirectory );
-        try
-        {
-            assertFalse( handle.isMarkerSet() );
-        }
-        catch ( MojoExecutionException e )
-        {
-            fail( e.getLongMessage() );
-        }
-
+        assertFalse( handle.isMarkerSet() );
     }
 
     public void testCopyFile()
@@ -106,9 +98,9 @@ public class TestCopyDependenciesMojo
     }
 
     /**
-     * tests the proper discovery and configuration of the mojo
+     * Tests the proper discovery and configuration of the mojo.
      *
-     * @throws Exception in case of an error.
+     * @throws Exception in case of an error
      */
     public void testMojo()
         throws Exception
@@ -485,20 +477,14 @@ public class TestCopyDependenciesMojo
         }
     }
 
-    public void testArtifactNotFound()
-        throws Exception
-    {
-        dotestArtifactExceptions( false, true );
-    }
-
     public void testArtifactResolutionException()
-        throws Exception
+        throws MojoFailureException
     {
-        dotestArtifactExceptions( true, false );
+        dotestArtifactExceptions();
     }
 
-    public void dotestArtifactExceptions( boolean are, boolean anfe )
-        throws Exception
+    public void dotestArtifactExceptions()
+        throws MojoFailureException
     {
         mojo.classifier = "jdk";
         mojo.type = "java-sources";
@@ -524,7 +510,7 @@ public class TestCopyDependenciesMojo
         throws MojoExecutionException, InterruptedException, IOException, MojoFailureException
     {
 
-        Set<Artifact> artifacts = new HashSet<Artifact>();
+        Set<Artifact> artifacts = new HashSet<>();
         Artifact release = stubFactory.getReleaseArtifact();
         assertTrue( release.getFile().setLastModified( System.currentTimeMillis() - 2000 ) );
 
@@ -552,10 +538,10 @@ public class TestCopyDependenciesMojo
     }
 
     public void testOverWriteRelease()
-        throws MojoExecutionException, InterruptedException, IOException, MojoFailureException
+        throws MojoExecutionException, IOException, MojoFailureException
     {
 
-        Set<Artifact> artifacts = new HashSet<Artifact>();
+        Set<Artifact> artifacts = new HashSet<>();
         Artifact release = stubFactory.getReleaseArtifact();
 
         assertTrue( release.getFile().setLastModified( 1000L ) );
@@ -584,10 +570,10 @@ public class TestCopyDependenciesMojo
     }
 
     public void testDontOverWriteSnap()
-        throws MojoExecutionException, InterruptedException, IOException, MojoFailureException
+        throws MojoExecutionException, IOException, MojoFailureException
     {
 
-        Set<Artifact> artifacts = new HashSet<Artifact>();
+        Set<Artifact> artifacts = new HashSet<>();
         Artifact snap = stubFactory.getSnapshotArtifact();
         assertTrue( snap.getFile().setLastModified( 1000L ) );
         assertEquals( 1000L, snap.getFile().lastModified() );         
@@ -615,10 +601,10 @@ public class TestCopyDependenciesMojo
     }
 
     public void testOverWriteSnap()
-        throws MojoExecutionException, InterruptedException, IOException, MojoFailureException
+        throws MojoExecutionException, IOException, MojoFailureException
     {
 
-        Set<Artifact> artifacts = new HashSet<Artifact>();
+        Set<Artifact> artifacts = new HashSet<>();
         Artifact snap = stubFactory.getSnapshotArtifact();
         assertTrue( snap.getFile().setLastModified( 1000L ) );
         assertEquals( 1000L, snap.getFile().lastModified() );
@@ -758,7 +744,7 @@ public class TestCopyDependenciesMojo
     {
         mojo.setCopyPom( true );
 
-        Set<Artifact> set = new HashSet<Artifact>();
+        Set<Artifact> set = new HashSet<>();
         set.add( stubFactory.createArtifact( "org.apache.maven", "maven-artifact", "2.0.7", Artifact.SCOPE_COMPILE ) );
         stubFactory.createArtifact( "org.apache.maven", "maven-artifact", "2.0.7", Artifact.SCOPE_COMPILE, "pom",
                                     null );
